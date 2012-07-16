@@ -6,7 +6,8 @@
 //				#        unsigned int value;
 //				#};
 //strategy from https://github.com/nodebits/linux-joystick
-
+//grep Handlers=mouse /proc/bus/input/devices
+//
 var FS = require('fs');
 
 function parse(buffer) {
