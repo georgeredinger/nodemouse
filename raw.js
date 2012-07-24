@@ -43,6 +43,7 @@ FS.open("/dev/input/event13", "r", function (err, fd) {
 					 up_stamp = mouse_event.time;
 					 if((up_stamp - dn_stamp) > brew_time){
 						 console.log("brw:"+Date());
+             brew_last = up_stamp;
 					 }
 					 console.log("dur:"+ Date()+"#" + (up_stamp-dn_stamp));
 					 up_last = up_stamp;
@@ -66,6 +67,7 @@ function handle_timeout() {
 			console.log("off:"+Date());
 		}
 	}
+	console.log("last brew was "+ (Date.now() - brew_last)/60000 + " MinutesAgo");
 	startTimeout(handle_timeout, warming_interval);
 }
 
