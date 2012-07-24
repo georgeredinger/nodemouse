@@ -39,17 +39,17 @@ FS.open("/dev/input/event13", "r", function (err, fd) {
 					happenen=true;
 					heating=true;
 				} 
-        if(mouse_event.state == 'U'){
-					 up_stamp = mouse_event.time;
-					 if((up_stamp - dn_stamp) > brew_time){
-						 console.log("brw:"+Date());
-             brew_last = up_stamp;
-					 }
-					 console.log("dur:"+ Date()+"#" + (up_stamp-dn_stamp));
-					 up_last = up_stamp;
-					 happenen=true;
-					 heating=false;
-				 }
+				if(mouse_event.state == 'U'){
+					up_stamp = mouse_event.time;
+					if((up_stamp - dn_stamp) > brew_time){
+						console.log("brw:"+Date());
+						brew_last = Date.now();
+					}
+					console.log("dur:"+ Date()+"#" + (up_stamp-dn_stamp));
+					up_last = up_stamp;
+					happenen=true;
+					heating=false;
+				}
 			} 	
 
 			startRead();
@@ -60,20 +60,22 @@ FS.open("/dev/input/event13", "r", function (err, fd) {
 
 // if nothing happens for 5 minutes, call the coffee pot "off"
 function handle_timeout() {
-	if(!heating){
+	if(!heating) {
 		if(happenen) {
 			console.log("on :"+Date());
 		}else {
 			console.log("off:"+Date());
 		}
 	}
-	console.log("last brew was "+ (Date.now() - brew_last)/60000 + " MinutesAgo");
+	if(brew_last != 0.0) {
+		console.log("last brew was "+ (Date.now() - brew_last)/60000 + " Minutes Ago");
+	}
 	startTimeout(handle_timeout, warming_interval);
 }
 
 function startTimeout(){
 	happenen = false;
-  setTimeout(handle_timeout, warming_interval);
+	setTimeout(handle_timeout, warming_interval);
 }
 
 startTimeout();
