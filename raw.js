@@ -21,7 +21,7 @@ warming_interval = 4*60*1000,
 happenen = false;
 
 
-FS.open("/dev/input/event13", "r", function (err, fd) {
+FS.open("/dev/input/event11", "r", function (err, fd) {
 	if (err) throw err;
 	var buffer = new Buffer(24);
 	function startRead() {
