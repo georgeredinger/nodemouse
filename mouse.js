@@ -11,46 +11,6 @@ var fs = require('fs'),
     EventEmitter = require('events').EventEmitter;
 
 var decode   = require('./decode_mouse_buffer');
-/**
- * Parse PS/2 mouse protocol
- * According to http://www.computer-engineering.org/ps2mouse/
- */
-function parse(mouse, buffer) {
-  var event = {
-    leftBtn:    (buffer[0] & 1  ) > 0, // Bit 0
-    rightBtn:   (buffer[0] & 2  ) > 0, // Bit 1
-    middleBtn:  (buffer[0] & 4  ) > 0, // Bit 2
-    state:      (buffer[0] & 8  ) > 0, // Bit 3 
-    xSign:      (buffer[0] & 16 ) > 0, // Bit 4
-    ySign:      (buffer[0] & 32 ) > 0, // Bit 5
-    xOverflow:  (buffer[0] & 64 ) > 0, // Bit 6
-    yOverflow:  (buffer[0] & 128) > 0, // Bit 7
-    xDelta:      buffer.readInt8(1),   // Byte 2 as signed int
-    yDelta:      buffer.readInt8(2)    // Byte 3 as signed int
-  };
-
-    console.log(buffer[0].toString(2) + ' ' + buffer[1].toString(2));
-
-	switch (buffer[0] & 7) 
-	{
-		case 1: 
-      event.type='left';
-		  break;
-		case 2: 
-			event.type='right';
-		  break;
-		case 4:
-		  event.type='middle'	;
-		  break;
-		default: event.type='moved'; 
-	}
-//	if (event.leftBtn || event.rightBtn || event.middleBtn) {
-//    event.type = 'button';
-//  } else {
-//    event.type = 'moved';
-//  }
-  return event;
-}
 
 function Mouse(mouseid) {
   this.wrap('onOpen');
@@ -98,21 +58,41 @@ Mouse.prototype.close = function(callback) {
 /****************
  * Sample Usage *
  ****************/
-
+var startLDown=0.0;
+var startMDown=0.0;
+var startRDown=0.0;
 function err(e) {
   console.log("error " + e);
 }
 
 function lel(e){
 	console.log("left " + e.state + ' ' + e.time);
+  if(e.state == 'D'){
+    startLDown = e.time;
+  }
+  else {
+    console.log("deltaTL " + (e.time-startLDown));
+  }
 }
 
 function rig(e){
 	console.log("right " + e.state + ' ' + e.time);
+  if(e.state == 'D'){
+    startRDown = e.time;
+  }
+  else {
+    console.log("deltaTR " + (e.time-startRDown));
+  }
 }
 
 function mid(e){
 	console.log("middle " + e.state + ' ' + e.time);
+  if(e.state == 'D'){
+    startMDown = e.time;
+  }
+  else {
+    console.log("deltaTM " + (e.time-startMDown));
+  }
 }
 // read all mouse events from /dev/input/mice
 var mouse = new Mouse(12);

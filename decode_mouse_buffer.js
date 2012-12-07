@@ -43,7 +43,7 @@ function mouse_event(mouse,buffer) {
 			} 
 			if(code == 0x1){
 				button='M';
-				state='D';
+				state='U';
 			}
 		} 	
 		if(type == 0x11){
