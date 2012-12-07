@@ -10,6 +10,7 @@
 var fs = require('fs'),
     EventEmitter = require('events').EventEmitter;
 
+var decode   = require('./decode_mouse_buffer');
 /**
  * Parse PS/2 mouse protocol
  * According to http://www.computer-engineering.org/ps2mouse/
@@ -19,6 +20,7 @@ function parse(mouse, buffer) {
     leftBtn:    (buffer[0] & 1  ) > 0, // Bit 0
     rightBtn:   (buffer[0] & 2  ) > 0, // Bit 1
     middleBtn:  (buffer[0] & 4  ) > 0, // Bit 2
+    state:      (buffer[0] & 8  ) > 0, // Bit 3 
     xSign:      (buffer[0] & 16 ) > 0, // Bit 4
     ySign:      (buffer[0] & 32 ) > 0, // Bit 5
     xOverflow:  (buffer[0] & 64 ) > 0, // Bit 6
@@ -26,7 +28,9 @@ function parse(mouse, buffer) {
     xDelta:      buffer.readInt8(1),   // Byte 2 as signed int
     yDelta:      buffer.readInt8(2)    // Byte 3 as signed int
   };
-	
+
+    console.log(buffer[0].toString(2) + ' ' + buffer[1].toString(2));
+
 	switch (buffer[0] & 7) 
 	{
 		case 1: 
@@ -51,9 +55,9 @@ function parse(mouse, buffer) {
 function Mouse(mouseid) {
   this.wrap('onOpen');
   this.wrap('onRead');
-  this.dev = typeof(mouseid) === 'number' ? 'mouse' + mouseid : 'mice';
-  this.buf = new Buffer(3);
-  fs.open('/dev/input/' + this.dev, 'r', this.onOpen);
+  //this.buf = new Buffer(3);
+  this.buf = new Buffer(24);
+  fs.open('/dev/input/event' + mouseid , 'r', this.onOpen);
 }
 
 Mouse.prototype = Object.create(EventEmitter.prototype, {
@@ -75,11 +79,12 @@ Mouse.prototype.onOpen = function(fd) {
 };
 
 Mouse.prototype.startRead = function() {
-  fs.read(this.fd, this.buf, 0, 3, null, this.onRead);
+  fs.read(this.fd, this.buf, 0, 24, null, this.onRead);
 };
 
 Mouse.prototype.onRead = function(bytesRead) {
-  var event = parse(this, this.buf);
+//  console.log("prototype.onRead " + this.buf);
+  event = decode.mouse_event(this,this.buf);
   event.dev = this.dev;
   this.emit(event.type, event);
   if (this.fd) this.startRead();
@@ -94,22 +99,27 @@ Mouse.prototype.close = function(callback) {
  * Sample Usage *
  ****************/
 
-function lel(){
-	console.log("left");
+function err(e) {
+  console.log("error " + e);
 }
 
-function rig(){
-	console.log("right");
+function lel(e){
+	console.log("left " + e.state + ' ' + e.time);
 }
 
-function mid(){
-	console.log("middle");
+function rig(e){
+	console.log("right " + e.state + ' ' + e.time);
+}
+
+function mid(e){
+	console.log("middle " + e.state + ' ' + e.time);
 }
 // read all mouse events from /dev/input/mice
-var mouse = new Mouse();
-mouse.on('left', lel);
-mouse.on('right', rig);
-mouse.on('middle', mid);
+var mouse = new Mouse(12);
+mouse.on('L', lel);
+mouse.on('R', rig);
+mouse.on('M', mid);
+mouse.on('error', err);
 //mouse.on('moved', console.log);
 
 // to read only a specific mouse by id (e.g. /dev/input/mouse0) use
@@ -118,3 +128,4 @@ mouse.on('middle', mid);
 // to close mouse
 // mouse.close();
 // mouse = undefined;
+//
